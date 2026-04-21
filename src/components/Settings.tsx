@@ -64,26 +64,15 @@ export function Settings() {
 
           <div className="space-y-4 max-w-2xl text-sm text-slate-600">
             <p>
-              Tất cả các mẫu tường trình đang được lưu trữ cục bộ (Local Storage) trên trình duyệt thiết bị này để đảm bảo tốc độ và quyền riêng tư lâm sàng.
+              Tất cả các mẫu tường trình đang được đồng bộ hóa trực tuyến trên đám mây (Cloud Sync) để đảm bảo bạn có thể truy cập từ bất kỳ thiết bị nào.
             </p>
             
             <div className="flex flex-wrap gap-3 pt-2">
-              <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium rounded-lg transition-colors shadow-sm">
+              <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium rounded-lg transition-colors shadow-sm cursor-not-allowed opacity-50">
                 Xuất dữ liệu (JSON)
               </button>
-              <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium rounded-lg transition-colors shadow-sm">
+              <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium rounded-lg transition-colors shadow-sm cursor-not-allowed opacity-50">
                 Nhập dữ liệu
-              </button>
-              <button 
-                onClick={() => {
-                  if(window.confirm('Bạn có chắc chắn muốn xóa toàn bộ mẫu đang có? Hành động này không thể hoàn tác.')) {
-                    localStorage.removeItem('surgicalTemplates');
-                    window.location.reload();
-                  }
-                }}
-                className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 font-medium rounded-lg transition-colors"
-              >
-                Xóa toàn bộ dữ liệu
               </button>
             </div>
           </div>

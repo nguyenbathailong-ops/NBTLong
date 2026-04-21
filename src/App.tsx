@@ -19,11 +19,19 @@ import { TemplateEditor } from './components/TemplateEditor';
 import { Settings } from './components/Settings';
 import { ReportPreview } from './components/ReportPreview';
 import { SurgicalTemplate } from './types';
-import { auth, db, loginWithGoogle, logout, handleFirestoreError } from './lib/firebase';
+import { auth, db, logout, handleFirestoreError, loginWithEmail, registerWithEmail, updateUserDisplayName } from './lib/firebase';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [regCode, setRegCode] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [activeTab, setActiveTab] = useState<'dashboard' | 'library' | 'editor' | 'settings'>('dashboard');
   const [templates, setTemplates] = useState<SurgicalTemplate[]>([]);
   const [editingTemplate, setEditingTemplate] = useState<SurgicalTemplate | null>(null);
@@ -38,6 +46,36 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setIsSubmitting(true);
+    
+    // We append a virtual domain to treat the username as an email for Firebase
+    const virtualEmail = `${username.trim().toLowerCase()}@surgidoc.id`;
+    
+    try {
+      if (authMode === 'register') {
+        if (!displayName.trim()) throw new Error('Vui lòng nhập tên của bạn');
+        if (regCode !== '612313') throw new Error('Mã đăng ký không chính xác');
+        await registerWithEmail(virtualEmail, password);
+        await updateUserDisplayName(displayName);
+      } else {
+        await loginWithEmail(virtualEmail, password);
+      }
+    } catch (error: any) {
+      let msg = error.message || 'Đã có lỗi xảy ra';
+      if (error.code === 'auth/user-not-found') msg = 'Không tìm thấy tài khoản này';
+      else if (error.code === 'auth/wrong-password') msg = 'Mật khẩu không chính xác';
+      else if (error.code === 'auth/email-already-in-use') msg = 'Tên đăng nhập này đã tồn tại';
+      else if (error.code === 'auth/weak-password') msg = 'Mật khẩu cần tối thiểu 6 ký tự';
+      else if (error.code === 'auth/invalid-email') msg = 'Tên đăng nhập không hợp lệ';
+      setAuthError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Sync Templates from Firestore
   useEffect(() => {
@@ -120,23 +158,94 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-8 md:p-12 text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mx-auto mb-6">
-            <Activity className="w-8 h-8" />
+      <div className="h-screen flex flex-col items-center justify-center bg-slate-50 p-4 overflow-y-auto">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-8 md:p-10 my-8">
+          <div className="text-center mb-8">
+            <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mx-auto mb-4">
+              <Activity className="w-7 h-7" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">SurgiDoc Sync</h1>
+            <p className="text-slate-500 text-sm mt-1">Đăng nhập để quản lý tường trình</p>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Chào mừng đến với SurgiDoc</h1>
-          <p className="text-slate-600 mb-8 leading-relaxed">
-            Hệ thống quản lý và đồng bộ tường trình phẫu thuật chuyên nghiệp trên mọi thiết bị.
-          </p>
-          <button 
-            onClick={loginWithGoogle}
-            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-xl font-semibold transition-all shadow-lg hover:shadow-blue-200"
-          >
-            <LogIn className="w-5 h-5" />
-            Tiếp tục với Google
-          </button>
-          <p className="text-[10px] text-slate-400 mt-6 uppercase tracking-widest">An toàn & Bảo mật tuyệt đối</p>
+
+          <form onSubmit={handleAuth} className="space-y-4">
+            {authMode === 'register' && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Tên của bạn</label>
+                <input 
+                  type="text" 
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="VD: BS. Nguyễn Văn A"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
+                  required
+                />
+              </div>
+            )}
+            
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Tên đăng nhập (Số hoặc chữ)</label>
+              <input 
+                type="text" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="VD: bacsi123"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
+                required
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Mật khẩu</label>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
+                required
+              />
+            </div>
+
+            {authMode === 'register' && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">Mã đăng ký bắt buộc</label>
+                <input 
+                  type="text" 
+                  value={regCode}
+                  onChange={(e) => setRegCode(e.target.value)}
+                  placeholder="Nhập mã 6 chữ số"
+                  className="w-full px-4 py-3 bg-blue-50/50 border border-blue-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm font-bold tracking-widest text-center"
+                  required
+                />
+              </div>
+            )}
+
+            {authError && (
+              <div className="text-red-500 text-xs font-medium bg-red-50 p-3 rounded-lg border border-red-100 animate-in fade-in slide-in-from-top-1">
+                {authError}
+              </div>
+            )}
+
+            <button 
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-2 mt-4"
+            >
+              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (authMode === 'login' ? 'ĐĂNG NHẬP' : 'TẠO TÀI KHOẢN')}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center">
+            <button 
+              onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setAuthError(''); }}
+              className="text-slate-500 hover:text-blue-600 font-medium text-sm transition-colors"
+            >
+              {authMode === 'login' ? 'Bạn chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Quay về đăng nhập'}
+            </button>
+          </div>
+          
+          <p className="text-[9px] text-slate-400 mt-10 text-center uppercase tracking-[0.2em] font-bold">SurgiDoc Professional System</p>
         </div>
       </div>
     );
