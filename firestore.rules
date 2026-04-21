@@ -1,0 +1,77 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints ---
+    function isValidTemplate(data) {
+      return data.keys().hasAll(['id', 'procedureName', 'userId', 'createdAt']) 
+        && data.id is string && data.id.size() <= 128
+        && data.procedureName is string && data.procedureName.size() <= 200
+        && data.surgeon is string && data.surgeon.size() <= 200
+        && data.icd10 is string && data.icd10.size() <= 20
+        && data.preOpDiagnosis is string && data.preOpDiagnosis.size() <= 1000
+        && data.postOpDiagnosis is string && data.postOpDiagnosis.size() <= 1000
+        && data.findings is string && data.findings.size() <= 5000
+        && data.description is string && data.description.size() <= 20000
+        && data.userId is string && data.userId == request.auth.uid
+        && data.createdAt is number
+        && (data.get('lastUsed', 0) is number)
+        && (data.get('interactiveNotes', []).size() <= 50);
+    }
+
+    // --- Match Blocks ---
+
+    match /templates/{templateId} {
+      allow get: if isSignedIn() && isOwner(existing().userId) && isValidId(templateId);
+      
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() 
+        && isValidId(templateId)
+        && isValidTemplate(incoming())
+        && incoming().id == templateId
+        && incoming().createdAt == request.time.toMillis();
+        
+      allow update: if isSignedIn()
+        && isValidId(templateId)
+        && isOwner(existing().userId)
+        && isValidTemplate(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().id == existing().id
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+             'procedureName', 'surgeon', 'icd10', 'preOpDiagnosis', 
+             'postOpDiagnosis', 'findings', 'description', 
+             'interactiveNotes', 'lastUsed'
+           ]);
+           
+      allow delete: if isSignedIn() && isOwner(existing().userId) && isValidId(templateId);
+    }
+  }
+}

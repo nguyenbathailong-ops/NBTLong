@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "SurgicalTemplate": {
+      "title": "Surgical Template",
+      "description": "A template for a surgical operative report.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "procedureName": { "type": "string" },
+        "surgeon": { "type": "string" },
+        "icd10": { "type": "string" },
+        "preOpDiagnosis": { "type": "string" },
+        "postOpDiagnosis": { "type": "string" },
+        "findings": { "type": "string" },
+        "description": { "type": "string" },
+        "interactiveNotes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "keyword": { "type": "string" },
+              "imageUrl": { "type": "string" }
+            }
+          }
+        },
+        "lastUsed": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "procedureName", "userId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/templates/{templateId}": {
+      "schema": "SurgicalTemplate",
+      "description": "Collection of surgical templates created by users."
+    }
+  }
+}

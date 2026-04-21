@@ -15,5 +15,6 @@ export interface SurgicalTemplate {
   description: string;
   interactiveNotes?: InteractiveNote[];
   lastUsed?: number;
+  userId: string;
   createdAt: number;
 }

@@ -34,15 +34,16 @@ export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorPro
       });
     } else {
       setFormData({
-        id: Date.now().toString(),
+        id: Math.random().toString(36).substring(2, 15),
         procedureName: '',
-        surgeon: '[Tên Phẫu thuật viên]',
+        surgeon: '',
         icd10: '',
         preOpDiagnosis: '',
         postOpDiagnosis: '',
         findings: '',
         description: '',
         interactiveNotes: [],
+        userId: '', // Will be set by App.tsx
         createdAt: Date.now()
       });
     }

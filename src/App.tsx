@@ -1,127 +1,146 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, LayoutDashboard, FileText, Settings as SettingsIcon, Menu, X, Plus } from 'lucide-react';
+import { Activity, LayoutDashboard, FileText, Settings as SettingsIcon, Menu, X, Plus, LogIn, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { 
+  collection, 
+  query, 
+  where, 
+  onSnapshot, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  updateDoc, 
+  serverTimestamp,
+  orderBy
+} from 'firebase/firestore';
 import { Dashboard } from './components/Dashboard';
 import { TemplateLibrary } from './components/TemplateLibrary';
 import { TemplateEditor } from './components/TemplateEditor';
 import { Settings } from './components/Settings';
 import { ReportPreview } from './components/ReportPreview';
 import { SurgicalTemplate } from './types';
-
-// Default templates updated with interactive notes
-const defaultTemplates: SurgicalTemplate[] = [
-  {
-    id: '1',
-    procedureName: 'Cắt ruột thừa nội soi',
-    surgeon: '[Tên Phẫu thuật viên]',
-    icd10: 'K35.80',
-    preOpDiagnosis: 'Viêm ruột thừa cấp',
-    postOpDiagnosis: 'Viêm ruột thừa cấp',
-    findings: 'Ruột thừa viêm sung huyết, chưa vỡ, không có áp xe xung quanh.',
-    description: 'Bệnh nhân nằm ngửa, gây mê nội khí quản. Sát trùng vùng mổ. Vào bụng 3 trocar (rốn, hố chậu trái, hạ vị).\n\nQuan sát thấy ruột thừa viêm đỏ. Tiến hành cầm máu mạc treo ruột thừa bằng dao điện/clip.\n\nCắt gốc ruột thừa bằng stapler/endo-loop. Lấy bệnh phẩm qua trocar rốn. Kiểm tra cầm máu kỹ, lau sạch hố chậu phải. Đóng các lỗ trocar.',
-    interactiveNotes: [
-       { id: 'in1', keyword: 'Cắt gốc ruột thừa', imageUrl: 'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&q=80&w=800' }
-    ],
-    createdAt: Date.now(),
-    lastUsed: Date.now() - 100000,
-  },
-  {
-    id: '2',
-    procedureName: 'Cắt túi mật nội soi',
-    surgeon: '[Tên Phẫu thuật viên]',
-    icd10: 'K80.20',
-    preOpDiagnosis: 'Sỏi túi mật có triệu chứng',
-    postOpDiagnosis: 'Sỏi túi mật, viêm túi mật mạn',
-    findings: 'Túi mật viêm mạn, thành dày, chứa nhiều sỏi, đường mật chính bình thường.',
-    description: 'Bệnh nhân nằm ngửa, gây mê nội khí quản. Vào bụng 4 trocar theo kỹ chuẩn. Bộc lộ tam giác Calot.\n\nPhẫu tích bộc lộ rõ ống túi mật và động mạch túi mật. Kẹp clip ống túi mật và động mạch túi mật, cắt rời.\n\nPhẫu tích bóc tách túi mật khỏi giường gan bằng dao điện. Cầm máu giường gan. Lấy túi mật qua trocar rốn. Kiểm tra cầm máu kỹ. Đóng các lỗ trocar.',
-    interactiveNotes: [
-       { id: 'in2', keyword: 'tam giác Calot', imageUrl: 'https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&q=80&w=800' },
-       { id: 'in3', keyword: 'bóc tách túi mật khỏi giường gan', imageUrl: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=800' }
-    ],
-    createdAt: Date.now() - 500000,
-    lastUsed: Date.now() - 200000,
-  }
-];
+import { auth, db, loginWithGoogle, logout, handleFirestoreError } from './lib/firebase';
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'library' | 'editor' | 'settings'>('dashboard');
   const [templates, setTemplates] = useState<SurgicalTemplate[]>([]);
   const [editingTemplate, setEditingTemplate] = useState<SurgicalTemplate | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<SurgicalTemplate | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Load from LocalStorage and Handle Data Migration
+  // Handle Auth State
   useEffect(() => {
-    const saved = localStorage.getItem('surgicalTemplates');
-    if (saved) {
-      try {
-        const parsedData = JSON.parse(saved);
-        
-        if (!Array.isArray(parsedData)) {
-          setTemplates(defaultTemplates);
-          return;
-        }
-
-        // Data Migration: Convert old steps format back to description + interactive notes
-        const migratedTemplates = parsedData.map((t: any) => {
-           let newT = { ...t };
-           if (t.steps && t.steps.length > 0) {
-              newT.description = t.steps.map((s: any) => s.content).join('\n\n');
-              
-              const convertedNotes = t.steps
-                 .filter((s: any) => s.imageUrl && s.imageUrl.trim() !== '')
-                 .map((s: any) => ({
-                    id: s.id,
-                    keyword: s.content.substring(0, 40), // Use first 40 chars as keyword fallback
-                    imageUrl: s.imageUrl
-                 }));
-                 
-              newT.interactiveNotes = convertedNotes;
-              delete newT.steps;
-           }
-           if(!newT.interactiveNotes) newT.interactiveNotes = [];
-           return newT;
-        });
-        
-        setTemplates(migratedTemplates);
-      } catch (e) {
-        setTemplates(defaultTemplates);
-      }
-    } else {
-      setTemplates(defaultTemplates);
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  // Save to LocalStorage
+  // Sync Templates from Firestore
   useEffect(() => {
-    if (templates.length > 0) {
-      localStorage.setItem('surgicalTemplates', JSON.stringify(templates));
+    if (!user) {
+      setTemplates([]);
+      return;
     }
-  }, [templates]);
 
-  const handleSaveTemplate = (template: SurgicalTemplate) => {
-    if (templates.find(t => t.id === template.id)) {
-      setTemplates(templates.map(t => t.id === template.id ? template : t));
-    } else {
-      setTemplates([template, ...templates]);
+    const q = query(
+      collection(db, 'templates'), 
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const templatesData: SurgicalTemplate[] = [];
+      snapshot.forEach((doc) => {
+        templatesData.push(doc.data() as SurgicalTemplate);
+      });
+      setTemplates(templatesData);
+    }, (error) => {
+      console.error("Firestore sync error:", error);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleSaveTemplate = async (template: SurgicalTemplate) => {
+    if (!user) return;
+    
+    try {
+      const templateData = {
+        ...template,
+        userId: user.uid,
+        createdAt: template.createdAt || Date.now(), // Fallback if missing
+      };
+
+      const docRef = doc(db, 'templates', template.id);
+      await setDoc(docRef, templateData, { merge: true });
+      
+      setActiveTab('library');
+      setEditingTemplate(null);
+    } catch (error) {
+      handleFirestoreError(error, 'write', `templates/${template.id}`);
     }
-    setActiveTab('library');
-    setEditingTemplate(null);
   };
 
-  const handleDeleteTemplate = (id: string) => {
+  const handleDeleteTemplate = async (id: string) => {
+    if (!user) return;
     if (window.confirm('Bạn có chắc chắn muốn xóa mẫu này không?')) {
-      setTemplates(templates.filter(t => t.id !== id));
+      try {
+        await deleteDoc(doc(db, 'templates', id));
+      } catch (error) {
+        handleFirestoreError(error, 'delete', `templates/${id}`);
+      }
     }
   };
 
-  const handleUseTemplate = (template: SurgicalTemplate) => {
-    // Update last used
-    const updated = { ...template, lastUsed: Date.now() };
-    setTemplates(templates.map(t => t.id === template.id ? updated : t));
-    setPreviewTemplate(updated);
+  const handleUseTemplate = async (template: SurgicalTemplate) => {
+    if (!user) return;
+    try {
+      const updated = { ...template, lastUsed: Date.now() };
+      await updateDoc(doc(db, 'templates', template.id), { lastUsed: updated.lastUsed });
+      setPreviewTemplate(updated);
+    } catch (error) {
+      handleFirestoreError(error, 'update', `templates/${template.id}`);
+    }
   };
 
   const closePreview = () => setPreviewTemplate(null);
+
+  if (authLoading) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
+        <p className="text-slate-600 font-medium tracking-tight">Đang tải cấu hình...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-8 md:p-12 text-center">
+          <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mx-auto mb-6">
+            <Activity className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Chào mừng đến với SurgiDoc</h1>
+          <p className="text-slate-600 mb-8 leading-relaxed">
+            Hệ thống quản lý và đồng bộ tường trình phẫu thuật chuyên nghiệp trên mọi thiết bị.
+          </p>
+          <button 
+            onClick={loginWithGoogle}
+            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-xl font-semibold transition-all shadow-lg hover:shadow-blue-200"
+          >
+            <LogIn className="w-5 h-5" />
+            Tiếp tục với Google
+          </button>
+          <p className="text-[10px] text-slate-400 mt-6 uppercase tracking-widest">An toàn & Bảo mật tuyệt đối</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -159,7 +178,7 @@ export default function App() {
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans text-slate-800">
+    <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
         <div 
@@ -215,14 +234,27 @@ export default function App() {
         </nav>
 
         <div className="shrink-0 p-4 border-t border-slate-200">
-          <div className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600">
-            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200">
-              BS
+          <div className="flex items-center justify-between gap-3 px-3 py-2 text-sm text-slate-600">
+            <div className="flex items-center gap-3">
+              {user.photoURL ? (
+                <img src={user.photoURL} alt={user.displayName || ''} className="w-9 h-9 rounded-full border border-slate-200" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200 uppercase">
+                  {user.displayName?.substring(0, 2) || 'BS'}
+                </div>
+              )}
+              <div className="overflow-hidden">
+                <p className="font-medium text-slate-900 truncate">{user.displayName || 'Bác sĩ'}</p>
+                <p className="text-xs text-slate-500 truncate">{user.email}</p>
+              </div>
             </div>
-            <div>
-              <p className="font-medium text-slate-900">Bác sĩ Lâm sàng</p>
-              <p className="text-xs text-slate-500">Ngoại Tổng Quát</p>
-            </div>
+            <button 
+              onClick={logout}
+              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Đăng xuất"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </aside>
