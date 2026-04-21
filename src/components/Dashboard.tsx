@@ -20,7 +20,7 @@ export function Dashboard({ templates, onUseTemplate, onCreateNew }: DashboardPr
     if (!term) return [];
     return templates.filter(t => 
       t.procedureName.toLowerCase().includes(term.toLowerCase()) ||
-      t.icd10.toLowerCase().includes(term.toLowerCase())
+      t.diagnosis.toLowerCase().includes(term.toLowerCase())
     ).slice(0, 5);
   };
 
@@ -48,7 +48,7 @@ export function Dashboard({ templates, onUseTemplate, onCreateNew }: DashboardPr
         </div>
         <input
           type="text"
-          placeholder="Tìm tên phẫu thuật, mã ICD-10..."
+          placeholder="Tìm tên phẫu thuật, chẩn đoán..."
           className="block w-full pl-11 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-lg transition-shadow"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -65,7 +65,7 @@ export function Dashboard({ templates, onUseTemplate, onCreateNew }: DashboardPr
               <div key={template.id} className="flex items-center justify-between p-6 hover:bg-slate-50 transition-colors">
                 <div>
                   <h3 className="font-medium text-slate-900 text-lg">{template.procedureName}</h3>
-                  <p className="text-sm text-slate-500 mt-1">ICD-10: {template.icd10}</p>
+                  <p className="text-sm text-slate-500 mt-1">{template.diagnosis}</p>
                 </div>
                 <button
                   onClick={() => onUseTemplate(template)}
@@ -107,9 +107,6 @@ export function Dashboard({ templates, onUseTemplate, onCreateNew }: DashboardPr
                   <div className="p-2 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <FileText className="w-5 h-5" />
                   </div>
-                  <span className="text-[11px] font-medium bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
-                    {template.icd10}
-                  </span>
                 </div>
                 <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-2">
                   {template.procedureName}

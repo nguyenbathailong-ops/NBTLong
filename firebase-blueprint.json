@@ -7,11 +7,7 @@
       "properties": {
         "id": { "type": "string" },
         "procedureName": { "type": "string" },
-        "surgeon": { "type": "string" },
-        "icd10": { "type": "string" },
-        "preOpDiagnosis": { "type": "string" },
-        "postOpDiagnosis": { "type": "string" },
-        "findings": { "type": "string" },
+        "diagnosis": { "type": "string" },
         "description": { "type": "string" },
         "interactiveNotes": {
           "type": "array",

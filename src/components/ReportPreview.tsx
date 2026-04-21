@@ -16,7 +16,7 @@ export function ReportPreview({ template, onClose, isEditingPreview = false }: R
     return `TƯỜNG TRÌNH PHẪU THUẬT
 
 1. Tên phẫu thuật: ${template.procedureName}
-2. Chẩn đoán: ${template.preOpDiagnosis} / ${template.postOpDiagnosis}
+2. Chẩn đoán: ${template.diagnosis}
 
 3. Chi tiết kỹ thuật & Quy trình:
 ${template.description}
@@ -145,7 +145,7 @@ ${template.description}
 
                 <div className="flex flex-col border-t border-slate-50 pt-6">
                   <span className="text-[10px] font-sans font-bold text-slate-400 uppercase tracking-[0.2em] mb-1.5">Chẩn đoán</span>
-                  <span className="text-slate-800 leading-snug">{template.preOpDiagnosis} / {template.postOpDiagnosis}</span>
+                  <span className="text-slate-800 leading-snug">{template.diagnosis || '...'}</span>
                 </div>
 
                 <div className="pt-6 border-t border-slate-100">

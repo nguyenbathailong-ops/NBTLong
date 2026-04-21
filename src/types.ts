@@ -7,11 +7,7 @@ export interface InteractiveNote {
 export interface SurgicalTemplate {
   id: string;
   procedureName: string;
-  surgeon: string;
-  icd10: string;
-  preOpDiagnosis: string;
-  postOpDiagnosis: string;
-  findings: string;
+  diagnosis: string;
   description: string;
   interactiveNotes?: InteractiveNote[];
   lastUsed?: number;

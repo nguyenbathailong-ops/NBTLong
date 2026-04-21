@@ -15,7 +15,7 @@ export function TemplateLibrary({ templates, onEdit, onDelete, onUse, onCreateNe
 
   const filteredTemplates = templates.filter(t => 
     t.procedureName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.icd10.toLowerCase().includes(searchTerm.toLowerCase())
+    t.diagnosis.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -53,8 +53,7 @@ export function TemplateLibrary({ templates, onEdit, onDelete, onUse, onCreateNe
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 uppercase tracking-wider text-xs font-semibold">
               <tr>
-                <th className="px-6 py-4">Tên phẫu thuật</th>
-                <th className="px-6 py-4">Mã ICD-10</th>
+                <th className="px-6 py-4">Tên phẫu thuật / Chẩn đoán</th>
                 <th className="px-6 py-4 hidden md:table-cell">Cập nhật lần cuối</th>
                 <th className="px-6 py-4 text-right">Thao tác</th>
               </tr>
@@ -62,13 +61,15 @@ export function TemplateLibrary({ templates, onEdit, onDelete, onUse, onCreateNe
             <tbody className="divide-y divide-slate-100">
               {filteredTemplates.length > 0 ? filteredTemplates.map(template => (
                 <tr key={template.id} className="hover:bg-slate-50 transition-colors group">
-                  <td className="px-6 py-4 font-medium text-slate-900">
-                    <span className="block truncate max-w-[200px] sm:max-w-xs md:max-w-md lg:max-w-xl" title={template.procedureName}>
-                      {template.procedureName}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">
-                    <span className="bg-slate-100 px-2 py-1 flex w-max rounded text-xs font-medium">{template.icd10 || '-'}</span>
+                   <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-900 truncate max-w-[200px] sm:max-w-xs md:max-w-md lg:max-w-xl" title={template.procedureName}>
+                        {template.procedureName}
+                      </span>
+                      <span className="text-xs text-slate-500 truncate max-w-[200px] sm:max-w-xs md:max-w-md lg:max-w-xl">
+                        {template.diagnosis}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-slate-500 hidden md:table-cell">
                     {new Date(template.createdAt).toLocaleDateString('vi-VN')}
@@ -101,7 +102,7 @@ export function TemplateLibrary({ templates, onEdit, onDelete, onUse, onCreateNe
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={3} className="px-6 py-10 text-center text-slate-500">
                     Không tìm thấy mẫu nào.
                   </td>
                 </tr>

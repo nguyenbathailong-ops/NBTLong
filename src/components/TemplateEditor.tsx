@@ -13,13 +13,10 @@ export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorPro
   const [formData, setFormData] = useState<SurgicalTemplate>({
     id: '',
     procedureName: '',
-    surgeon: '',
-    icd10: '',
-    preOpDiagnosis: '',
-    postOpDiagnosis: '',
-    findings: '',
+    diagnosis: '',
     description: '',
     interactiveNotes: [],
+    userId: '',
     createdAt: Date.now()
   });
 
@@ -36,11 +33,7 @@ export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorPro
       setFormData({
         id: Math.random().toString(36).substring(2, 15),
         procedureName: '',
-        surgeon: '',
-        icd10: '',
-        preOpDiagnosis: '',
-        postOpDiagnosis: '',
-        findings: '',
+        diagnosis: '',
         description: '',
         interactiveNotes: [],
         userId: '', // Will be set by App.tsx
@@ -136,8 +129,8 @@ export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorPro
 
       <div className="bg-white border border-slate-200 shadow-sm rounded-2xl flex-1 overflow-auto">
         <form id="template-form" onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1.5 col-span-1 md:col-span-2">
+          <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-1.5">
               <label className="block text-sm font-medium text-slate-700">Tên thủ thuật / Phẫu thuật <span className="text-red-500">*</span></label>
               <input 
                 type="text" 
@@ -151,63 +144,18 @@ export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorPro
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-700">Mã ICD-10</label>
+              <label className="block text-sm font-medium text-slate-700">Chẩn đoán</label>
               <input 
                 type="text" 
-                name="icd10"
-                value={formData.icd10}
+                name="diagnosis"
+                value={formData.diagnosis}
                 onChange={handleChange}
-                placeholder="VD: K35.80"
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-700">Phẫu thuật viên</label>
-              <input 
-                type="text" 
-                name="surgeon"
-                value={formData.surgeon}
-                onChange={handleChange}
-                placeholder="[Tên Phẫu thuật viên]"
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-700">Chẩn đoán trước mổ</label>
-              <input 
-                type="text" 
-                name="preOpDiagnosis"
-                value={formData.preOpDiagnosis}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-700">Chẩn đoán sau mổ</label>
-              <input 
-                type="text" 
-                name="postOpDiagnosis"
-                value={formData.postOpDiagnosis}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
-              />
-            </div>
-
-            <div className="space-y-1.5 col-span-1 md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700">Quan sát bệnh lý (Findings)</label>
-              <textarea 
-                name="findings"
-                value={formData.findings}
-                onChange={handleChange}
-                rows={3}
+                placeholder="VD: Viêm ruột thừa cấp"
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
               />
             </div>
 
-            <div className="space-y-1.5 col-span-1 md:col-span-2 flex flex-col">
+            <div className="space-y-1.5 flex flex-col">
               <label className="block text-sm font-medium text-slate-700 mt-2 mb-1">Mô tả chi tiết quá trình phẫu thuật</label>
               <textarea 
                 name="description"
@@ -220,7 +168,7 @@ export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorPro
             </div>
 
             {/* Interactive Notes Section */}
-            <div className="space-y-4 col-span-1 md:col-span-2 pt-4 border-t border-slate-100">
+            <div className="space-y-4 pt-4 border-t border-slate-100">
               <div className="flex items-center justify-between">
                  <div>
                    <label className="block text-sm font-medium text-slate-700">Hình ảnh tương tác (Interactive Notes)</label>
