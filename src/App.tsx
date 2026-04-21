@@ -56,6 +56,11 @@ export default function App() {
       try {
         const parsedData = JSON.parse(saved);
         
+        if (!Array.isArray(parsedData)) {
+          setTemplates(defaultTemplates);
+          return;
+        }
+
         // Data Migration: Convert old steps format back to description + interactive notes
         const migratedTemplates = parsedData.map((t: any) => {
            let newT = { ...t };
