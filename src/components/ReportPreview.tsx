@@ -16,15 +16,9 @@ export function ReportPreview({ template, onClose, isEditingPreview = false }: R
     return `TƯỜNG TRÌNH PHẪU THUẬT
 
 1. Tên phẫu thuật: ${template.procedureName}
-2. Phẫu thuật viên: ${template.surgeon}
-3. Mã ICD-10: ${template.icd10 || 'Không có'}
-4. Chẩn đoán trước mổ: ${template.preOpDiagnosis}
-5. Chẩn đoán sau mổ: ${template.postOpDiagnosis}
+2. Chẩn đoán: ${template.preOpDiagnosis} / ${template.postOpDiagnosis}
 
-6. Quan sát bệnh lý (Findings):
-${template.findings}
-
-7. Mô tả chi tiết quá trình phẫu thuật:
+3. Chi tiết kỹ thuật & Quy trình:
 ${template.description}
 `;
   };
@@ -131,50 +125,33 @@ ${template.description}
           {/* Main Paper Content */}
           <div className={`flex-1 overflow-auto p-6 md:p-10 transition-all duration-300 ${activeImage ? 'md:pr-10' : ''}`}>
             <div className="bg-white max-w-3xl mx-auto shadow-sm border border-slate-200 rounded-lg p-8 md:p-12 print-content" onClick={() => setActiveImage(null)}>
-              <div className="text-center mb-8 border-b pb-6 border-slate-200">
-                <h1 className="text-2xl font-bold text-slate-900 uppercase">Tường trình phẫu thuật</h1>
-                <p className="text-slate-500 mt-2">Bệnh viện / Phòng khám SurgiDoc</p>
+              <div className="text-center mb-10 border-b pb-8 border-slate-100">
+                <h1 className="text-3xl font-sans font-bold text-slate-900 uppercase tracking-tight">Tường trình phẫu thuật</h1>
+                <div className="flex items-center justify-center gap-2 mt-3">
+                  <div className="h-px w-8 bg-blue-200" />
+                  <p className="text-sm font-sans font-medium text-slate-500 uppercase tracking-widest">Bệnh viện SurgiDoc</p>
+                  <div className="h-px w-8 bg-blue-200" />
+                </div>
               </div>
 
-              <div className="space-y-6 text-slate-800 leading-relaxed font-serif text-[15px]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Tên phẫu thuật</span>
-                    <span className="font-medium text-lg">{template.procedureName || '...'}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Phẫu thuật viên</span>
-                    <span className="font-medium">{template.surgeon || '...'}</span>
-                  </div>
+              <div className="space-y-8 text-slate-800 font-sans">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-sans font-bold text-slate-400 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-2">
+                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                     Tên phẫu thuật
+                  </span>
+                  <span className="font-semibold text-xl leading-tight text-slate-900">{template.procedureName || '...'}</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Chẩn đoán trước mổ</span>
-                    <span>{template.preOpDiagnosis || '...'}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Chẩn đoán sau mổ</span>
-                    <span>{template.postOpDiagnosis || '...'}</span>
-                  </div>
+                <div className="flex flex-col border-t border-slate-50 pt-6">
+                  <span className="text-[10px] font-sans font-bold text-slate-400 uppercase tracking-[0.2em] mb-1.5">Chẩn đoán</span>
+                  <span className="text-slate-800 leading-snug">{template.preOpDiagnosis} / {template.postOpDiagnosis}</span>
                 </div>
 
-                {(template.icd10) && (
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Mã ICD-10</span>
-                    <span>{template.icd10}</span>
-                  </div>
-                )}
-
-                <div className="pt-4 border-t border-slate-100">
-                  <span className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Quan sát bệnh lý (Findings)</span>
-                  <p className="whitespace-pre-wrap">{template.findings || '...'}</p>
-                </div>
-
-                <div className="pt-4 border-t border-slate-100 relative">
-                  <span className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Mô tả chi tiết quá trình phẫu thuật</span>
+                <div className="pt-6 border-t border-slate-100">
+                  <span className="block text-[10px] font-sans font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Chi tiết kỹ thuật & Quy trình</span>
                   
-                  <div className="whitespace-pre-wrap text-justify leading-loose">
+                  <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-slate-700 font-sans">
                     {renderInteractiveDescription(template.description || '', template.interactiveNotes || [])}
                   </div>
                 </div>
